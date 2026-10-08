@@ -1,0 +1,50 @@
+⚠ Port 3000 is in use by process 12896, using available port 3001 instead.
+▲ Next.js 16.3.6 (webpack)
+- Local:         http://localhost:3001
+- Network:       http://26.181.157.252:3001
+- Environments: .env.local
+✓ Ready in 1723ms
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\laragon\www\PPKN\app\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\laragon\www\PPKN\app\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+✓ Running next.config.ts took 522ms
+  Skipping creating a lockfile at D:\laragon\www\PPKN\app\.next\dev\lock because we're using WASM bindings
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+✓ Generated AGENTS.md and CLAUDE.md for AI agents. Set `agentRules: false` in next.config to disable.
+○ Compiling /api/comments ...
+API /comments error: SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+    at JSON.parse (<anonymous>)
+ POST /api/comments 500 in 8.6s (next.js: 7.4s, proxy.ts: 563ms, application-code: 606ms)
+ POST /api/comments 500 in 1388ms (next.js: 16ms, proxy.ts: 59ms, application-code: 1313ms)
+⨯ unhandledRejection: Error: Error: invalid type: boolean `false`, expected enum CodeFrameColorMode
+    at ignore-listed frames
+  Reload env: .env.local
+⨯ The directory at "D:\laragon\www\PPKN\app\.next\dev" was deleted.
+
+Deleting this directory while Next.js is running can lead to undefined behavior. Restarting the server to recover...
+▲ Next.js 16.3.6 (webpack)
+- Local:         http://localhost:3001
+- Network:       http://26.181.157.252:3001
+- Environments: .env.local
+✓ Ready in 1560ms
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\laragon\www\PPKN\app\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\laragon\www\PPKN\app\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+✓ Running next.config.ts took 448ms
+  Skipping creating a lockfile at D:\laragon\www\PPKN\app\.next\dev\lock because we're using WASM bindings
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+  Reload env: .env.local
+  Reload env: .env.local
+  Reload env: .env.local
+  Reload env: .env.local
+[?25h

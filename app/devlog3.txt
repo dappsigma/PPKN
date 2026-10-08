@@ -1,0 +1,204 @@
+⚠ Port 3000 is in use by process 21560, using available port 3003 instead.
+▲ Next.js 16.3.6 (webpack)
+- Local:         http://localhost:3003
+- Network:       http://26.181.157.252:3003
+- Environments: .env.local
+✓ Ready in 1210ms
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\laragon\www\PPKN\app\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\laragon\www\PPKN\app\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+✓ Running next.config.ts took 260ms
+  Skipping creating a lockfile at D:\laragon\www\PPKN\app\.next\dev\lock because we're using WASM bindings
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+ POST /api/comments 500 in 2.5s (next.js: 1480ms, proxy.ts: 152ms, application-code: 910ms)
+⨯ unhandledRejection: Error: Error: invalid type: boolean `false`, expected enum CodeFrameColorMode
+    at ignore-listed frames
+○ Compiling /_not-found ...
+ POST /api/comments 404 in 9.7s (next.js: 8.9s, proxy.ts: 53ms, application-code: 761ms)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'D:\laragon\www\PPKN\app\.next\dev\cache\webpack\server-development\11.pack.gz_' -> 'D:\laragon\www\PPKN\app\.next\dev\cache\webpack\server-development\11.pack.gz'
+ GET /api/comments 200 in 375ms (next.js: 21ms, proxy.ts: 38ms, application-code: 315ms)
+[API] Calling moderateComment for: anjing lu
+ POST /api/comments 500 in 85ms (next.js: 5ms, proxy.ts: 12ms, application-code: 68ms)
+⨯ unhandledRejection: Error: Error: invalid type: boolean `false`, expected enum CodeFrameColorMode
+    at ignore-listed frames
+[API] Calling moderateComment for: anjing lu
+ POST /api/comments 500 in 806ms (next.js: 233ms, proxy.ts: 56ms, application-code: 517ms)
+⨯ unhandledRejection: Error: Error: invalid type: boolean `false`, expected enum CodeFrameColorMode
+    at ignore-listed frames
+○ Compiling /_not-found ...
+ POST /api/comments 404 in 15.3s (next.js: 10.8s, proxy.ts: 2.5s, application-code: 2.0s)
+[API] Calling moderateComment for: anjing lu
+ POST /api/comments 500 in 3.6s (next.js: 2.4s, proxy.ts: 370ms, application-code: 864ms)
+⨯ unhandledRejection: Error: Error: invalid type: boolean `false`, expected enum CodeFrameColorMode
+    at ignore-listed frames
+[API] Calling moderateComment for: anjing lu
+[AI] >>> moderateComment called: anjing lu
+[AI] Provider: openai | Key: present
+[AI] Creating model...
+[AI] Using OpenAI provider
+ POST /api/comments 500 in 4.3s (next.js: 2.7s, proxy.ts: 224ms, application-code: 1312ms)
+⨯ unhandledRejection: Error: Error: invalid type: boolean `false`, expected enum CodeFrameColorMode
+    at ignore-listed frames
+[API] Calling moderateComment for: anjing lu
+[AI] >>> moderateComment called: anjing lu
+[AI] Provider: openai | Key: present
+[AI] Creating model...
+[AI] Using OpenAI provider
+ POST /api/comments 500 in 853ms (next.js: 245ms, proxy.ts: 88ms, application-code: 520ms)
+⨯ unhandledRejection: Error: Error: invalid type: boolean `false`, expected enum CodeFrameColorMode
+    at ignore-listed frames
+  Reload env: .env.local
+[API] Calling moderateComment for: anjing lu
+[AI] >>> moderateComment called: anjing lu
+[AI] Provider: mock | Key: present
+[AI] Using MOCK moderation
+[API] AI Result: {
+  isViolation: true,
+  category: 'kasar',
+  reason: 'Komentar mengandung kata kasar atau makian yang berpotensi merendahkan.'
+}
+[API] Evaluating sanction...
+[API] Sanction result: {
+  level: 1,
+  levelName: 'Level 1: Peringatan',
+  isMuted: false,
+  isRestricted: false,
+  mutedUntil: null,
+  historyCount: 1,
+  canComment: true,
+  timeRemaining: '',
+  isFastTestMode: true,
+  history: [
+    {
+      timestamp: '2026-09-26T09:43:37.280Z',
+      comment: 'anjing lu',
+      category: 'kasar',
+      reason: 'Komentar mengandung kata kasar atau makian yang berpotensi merendahkan.',
+      levelAssigned: 1
+    }
+  ]
+} levelAssigned: 1
+ POST /api/comments 200 in 990ms (next.js: 546ms, proxy.ts: 31ms, application-code: 413ms)
+[API] Calling moderateComment for: goblok bgt gua lupa buku wkwk
+[AI] >>> moderateComment called: goblok bgt gua lupa buku wkwk
+[AI] Provider: mock | Key: present
+[AI] Using MOCK moderation
+[API] AI Result: {
+  isViolation: false,
+  category: 'tidak_ada',
+  reason: 'Terdeteksi sebagai bahasa gaul / gurauan bernada humor, bukan penghinaan personal.'
+}
+[API] Evaluating sanction...
+[API] Sanction result: {
+  level: 0,
+  levelName: 'Aman (Tidak Ada Sanksi)',
+  isMuted: false,
+  isRestricted: false,
+  mutedUntil: null,
+  historyCount: 0,
+  canComment: true,
+  timeRemaining: '',
+  isFastTestMode: true,
+  history: []
+} levelAssigned: 0
+ POST /api/comments 200 in 54ms (next.js: 7ms, proxy.ts: 22ms, application-code: 26ms)
+[API] Calling moderateComment for: dasar silit
+[AI] >>> moderateComment called: dasar silit
+[AI] Provider: mock | Key: present
+[AI] Using MOCK moderation
+[API] AI Result: {
+  isViolation: true,
+  category: 'kasar',
+  reason: 'Komentar mengandung kata kasar atau makian yang berpotensi merendahkan.'
+}
+[API] Evaluating sanction...
+[API] Sanction result: {
+  level: 1,
+  levelName: 'Level 1: Peringatan',
+  isMuted: false,
+  isRestricted: false,
+  mutedUntil: null,
+  historyCount: 1,
+  canComment: true,
+  timeRemaining: '',
+  isFastTestMode: true,
+  history: [
+    {
+      timestamp: '2026-09-26T09:44:31.507Z',
+      comment: 'dasar silit',
+      category: 'kasar',
+      reason: 'Komentar mengandung kata kasar atau makian yang berpotensi merendahkan.',
+      levelAssigned: 1
+    }
+  ]
+} levelAssigned: 1
+ POST /api/comments 200 in 42ms (next.js: 8ms, proxy.ts: 12ms, application-code: 23ms)
+[API] Calling moderateComment for: jancok lu
+[AI] >>> moderateComment called: jancok lu
+[AI] Provider: mock | Key: present
+[AI] Using MOCK moderation
+[API] AI Result: {
+  isViolation: true,
+  category: 'kasar',
+  reason: 'Komentar mengandung kata kasar atau makian yang berpotensi merendahkan.'
+}
+[API] Evaluating sanction...
+[API] Sanction result: {
+  level: 2,
+  levelName: 'Level 2: Mute (15 Dtk Test)',
+  isMuted: true,
+  isRestricted: false,
+  mutedUntil: '2026-09-26T09:45:25.604Z',
+  historyCount: 2,
+  canComment: false,
+  timeRemaining: '15 detik tersisa',
+  isFastTestMode: true,
+  history: [
+    {
+      timestamp: '2026-09-26T09:45:10.604Z',
+      comment: 'jancok lu',
+      category: 'kasar',
+      reason: 'Komentar mengandung kata kasar atau makian yang berpotensi merendahkan.',
+      levelAssigned: 2
+    },
+    {
+      timestamp: '2026-09-26T09:44:31.507Z',
+      comment: 'dasar silit',
+      category: 'kasar',
+      reason: 'Komentar mengandung kata kasar atau makian yang berpotensi merendahkan.',
+      levelAssigned: 1
+    }
+  ]
+} levelAssigned: 2
+ POST /api/comments 200 in 69ms (next.js: 11ms, proxy.ts: 29ms, application-code: 28ms)
+○ Compiling /_not-found ...
+ POST /api/comments 404 in 6.0s (next.js: 5.8s, proxy.ts: 15ms, application-code: 180ms)
+⨯ The directory at "D:\laragon\www\PPKN\app\.next\dev" was deleted.
+
+Deleting this directory while Next.js is running can lead to undefined behavior. Restarting the server to recover...
+▲ Next.js 16.3.6 (webpack)
+- Local:         http://localhost:3003
+- Network:       http://26.181.157.252:3003
+- Environments: .env.local
+✓ Ready in 1688ms
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\laragon\www\PPKN\app\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\laragon\www\PPKN\app\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+✓ Running next.config.ts took 461ms
+  Skipping creating a lockfile at D:\laragon\www\PPKN\app\.next\dev\lock because we're using WASM bindings
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'D:\laragon\www\PPKN\app\.next\dev\cache\webpack\client-development\0.pack.gz_' -> 'D:\laragon\www\PPKN\app\.next\dev\cache\webpack\client-development\0.pack.gz'
+  Reload env: .env.local
+  Reload env: .env.local
+  Reload env: .env.local
+  Reload env: .env.local
