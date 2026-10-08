@@ -1,14 +1,38 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { moderateComment } from "@/lib/ai";
 import { evaluateSanction } from "@/lib/sanctions";
-import { readComments, writeComments } from "@/lib/storage";
+import { readComments, writeComments, readSettings, writeSettings } from "@/lib/storage";
 
 // Sanction durations are server policy: set FAST_TEST_MODE=true for short demo mutes
 const fastTestMode = process.env.FAST_TEST_MODE === "true";
 
 export async function GET(req: NextRequest) {
   const comments = readComments();
-  return NextResponse.json({ comments });
+  const settings = readSettings();
+  return NextResponse.json({ comments, commentsOpen: settings.commentsOpen });
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const settings = readSettings();
+    if (typeof body.commentsOpen === "boolean") {
+      settings.commentsOpen = body.commentsOpen;
+    } else {
+      settings.commentsOpen = !settings.commentsOpen;
+    }
+    writeSettings(settings);
+    return NextResponse.json({
+      success: true,
+      commentsOpen: settings.commentsOpen,
+      message: settings.commentsOpen
+        ? "Fitur komentar telah dibuka."
+        : "Fitur komentar telah ditutup.",
+    });
+  } catch (error) {
+    console.error("API PATCH /comments error:", error);
+    return NextResponse.json({ error: "Gagal memperbarui pengaturan komentar" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -21,6 +45,15 @@ export async function POST(req: NextRequest) {
     const { text, postId = "post_1" } = await req.json();
     if (!text || text.trim() === "") {
       return NextResponse.json({ error: "Comment text is required" }, { status: 400 });
+    }
+
+    // 0. Cek apakah komentar ditutup oleh pemilik postingan
+    const settings = readSettings();
+    if (!settings.commentsOpen) {
+      return NextResponse.json(
+        { error: "Komentar untuk postingan ini telah dinonaktifkan." },
+        { status: 403 }
+      );
     }
 
     // 1. Cek status sanksi saat ini
@@ -103,5 +136,62 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("API /comments error:", error);
     return NextResponse.json({ error: "Internal Server Error", detail: String(error) }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const idParam = searchParams.get("id");
+    const allParam = searchParams.get("all");
+
+    let commentId = idParam;
+    let deleteAll = allParam === "true";
+
+    if (!commentId && !deleteAll) {
+      const body = await req.json().catch(() => ({}));
+      commentId = body?.id || body?.commentId;
+      deleteAll = body?.all === true;
+    }
+
+    if (deleteAll) {
+      writeComments([]);
+      return NextResponse.json({
+        success: true,
+        message: "Semua komentar berhasil dihapus.",
+      });
+    }
+
+    if (!commentId) {
+      return NextResponse.json(
+        { error: "ID komentar diperlukan untuk menghapus." },
+        { status: 400 }
+      );
+    }
+
+    const comments = readComments();
+    const initialLength = comments.length;
+    const filteredComments = comments.filter((c) => c.id !== commentId);
+
+    if (filteredComments.length === initialLength) {
+      return NextResponse.json(
+        { error: "Komentar tidak ditemukan atau sudah dihapus." },
+        { status: 404 }
+      );
+    }
+
+    writeComments(filteredComments);
+
+    return NextResponse.json({
+      success: true,
+      message: "Komentar berhasil dihapus.",
+      deletedId: commentId,
+    });
+  } catch (error) {
+    console.error("API DELETE /comments error:", error);
+    return NextResponse.json(
+      { error: "Gagal menghapus komentar", detail: String(error) },
+      { status: 500 }
+    );
   }
 }

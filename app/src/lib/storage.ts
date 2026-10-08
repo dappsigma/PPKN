@@ -88,3 +88,26 @@ export function readComments(): CommentData[] {
 export function writeComments(comments: CommentData[]): void {
   atomicWrite(getFilePath("comments.json"), JSON.stringify(comments, null, 2));
 }
+
+export interface PostSettings {
+  commentsOpen: boolean;
+}
+
+export function readSettings(): PostSettings {
+  const filePath = getFilePath("settings.json");
+  if (!fs.existsSync(filePath)) {
+    const defaults: PostSettings = { commentsOpen: true };
+    fs.writeFileSync(filePath, JSON.stringify(defaults, null, 2));
+    return defaults;
+  }
+  try {
+    const raw = fs.readFileSync(filePath, "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return { commentsOpen: true };
+  }
+}
+
+export function writeSettings(settings: PostSettings): void {
+  atomicWrite(getFilePath("settings.json"), JSON.stringify(settings, null, 2));
+}
