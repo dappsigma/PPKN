@@ -6,47 +6,163 @@ import { z } from "zod";
 
 export interface AIModerationResult {
   isViolation: boolean;
-  category: "personal_attack" | "harassment" | "bullying" | "banter" | "self_deprecation" | "neutral";
+  category:
+    | "personal_attack"
+    | "harassment"
+    | "bullying"
+    | "banter"
+    | "self_deprecation"
+    | "neutral";
   confidence: number;
   reasoning: string;
 }
 
 const moderationSchema = z.object({
   isViolation: z.boolean(),
-  category: z.enum(["personal_attack", "harassment", "bullying", "banter", "self_deprecation", "neutral"]),
-  confidence: z.number().min(0).max(1).describe("Tingkat keyakinan penilaian (0-1)"),
-  reasoning: z.string().describe("Penjelasan singkat niat di balik komentar (1-2 kalimat)"),
+  category: z.enum([
+    "personal_attack",
+    "harassment",
+    "bullying",
+    "banter",
+    "self_deprecation",
+    "neutral",
+  ]),
+  confidence: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe("Tingkat keyakinan penilaian (0-1)"),
+  reasoning: z
+    .string()
+    .describe("Penjelasan singkat niat di balik komentar (1-2 kalimat)"),
 });
 
 function runMockModeration(text: string): AIModerationResult {
   const lower = text.toLowerCase();
 
-  const laughMarkers = ["wkwk", "wkwwk", "haha", "hehe", "lol", "kocak", "lucu", "😂", "🤣", "😭", "coy", "bro"];
+  const laughMarkers = [
+    "wkwk",
+    "wkwwk",
+    "haha",
+    "hehe",
+    "lol",
+    "kocak",
+    "lucu",
+    "😂",
+    "🤣",
+    "😭",
+    "coy",
+    "bro",
+  ];
   const selfMarkers = ["gw", "gua", "gue", "aku", "diriku", "sendiri", "saya"];
-  const surpriseMarkers = ["astaga", "aduh", "wow", "gila", "parah", "banget", "nyesek", "kebangetan"];
+  const surpriseMarkers = [
+    "astaga",
+    "aduh",
+    "wow",
+    "gila",
+    "parah",
+    "banget",
+    "nyesek",
+    "kebangetan",
+  ];
 
-  const isSelfDeprecation = selfMarkers.some((s) => lower.includes(s)) &&
-    (lower.includes("goblok") || lower.includes("bego") || lower.includes("tolol") || lower.includes("bodoh"));
-  
-  const isBanter = laughMarkers.some((m) => lower.includes(m)) || isSelfDeprecation;
-  
-  const isSituationalSurprise = surpriseMarkers.some((m) => lower.includes(m)) &&
-    !lower.includes("lu") && !lower.includes("kamu") && !lower.includes("anda") &&
-    !lower.includes("goblok") && !lower.includes("tolol") && !lower.includes("bego") &&
-    !lower.includes("bangsat") && !lower.includes("anjing") && !lower.includes("babi");
+  const isSelfDeprecation =
+    selfMarkers.some((s) => lower.includes(s)) &&
+    (lower.includes("goblok") ||
+      lower.includes("bego") ||
+      lower.includes("tolol") ||
+      lower.includes("bodoh"));
+
+  const isBanter =
+    laughMarkers.some((m) => lower.includes(m)) || isSelfDeprecation;
+
+  const isSituationalSurprise =
+    surpriseMarkers.some((m) => lower.includes(m)) &&
+    !lower.includes("lu") &&
+    !lower.includes("kamu") &&
+    !lower.includes("anda") &&
+    !lower.includes("goblok") &&
+    !lower.includes("tolol") &&
+    !lower.includes("bego") &&
+    !lower.includes("bangsat") &&
+    !lower.includes("anjing") &&
+    !lower.includes("babi");
 
   const badWords = [
-    "anjing", "babi", "bangsat", "kontol", "memek", "goblok", "tolol", "bodoh", "sialan", "tai", "bajingan",
-    "jing", "anjiing", "anjg", "ajg", "bgst", "kntl", "mmk", "gblk", "tll", "bjngn", "pepek", "peler", "pantek", "pantat",
-    "jancok", "dancok", "ancok", "cok", "suu", "suw", "raimu", "matamu", "silit", "asu", "kirik",
-    "sia", "geblek", "belegug", "pundung", "goblug",
-    "pukimak", "puki", "kimak", "lontong", "lonte", "perek",
-    "anjir", "anjirr", "anjirrr", "anjirnya", "anjirnya", "anjeng", "anjengg"
+    "anjing",
+    "babi",
+    "bangsat",
+    "kontol",
+    "memek",
+    "goblok",
+    "tolol",
+    "bodoh",
+    "sialan",
+    "tai",
+    "bajingan",
+    "jing",
+    "anjiing",
+    "anjg",
+    "ajg",
+    "bgst",
+    "kntl",
+    "mmk",
+    "gblk",
+    "tll",
+    "bjngn",
+    "pepek",
+    "peler",
+    "pantek",
+    "pantat",
+    "jancok",
+    "dancok",
+    "ancok",
+    "cok",
+    "suu",
+    "suw",
+    "raimu",
+    "matamu",
+    "silit",
+    "asu",
+    "kirik",
+    "sia",
+    "geblek",
+    "belegug",
+    "pundung",
+    "goblug",
+    "pukimak",
+    "puki",
+    "kimak",
+    "lontong",
+    "lonte",
+    "perek",
+    "anjir",
+    "anjirr",
+    "anjirrr",
+    "anjirnya",
+    "anjirnya",
+    "anjeng",
+    "anjengg",
   ];
+  const appearanceInsults = ["jelek", "jlek", "jelekk", "jeleq"];
   const dirtyWords = ["jorok", "mesum", "sange", "bugil", "porno"];
-  const targetMarkers = ["lu", "kamu", "anda", "dia", "mereka", "kalian", "woi", "woy", "oy", "lue", "lo", "elo"];
+  const targetMarkers = [
+    "lu",
+    "kamu",
+    "anda",
+    "dia",
+    "mereka",
+    "kalian",
+    "woi",
+    "woy",
+    "oy",
+    "lue",
+    "lo",
+    "elo",
+  ];
 
   const hasBadWord = badWords.some((w) => lower.includes(w));
+  const hasAppearanceInsult = appearanceInsults.some((w) => lower.includes(w));
   const hasDirtyWord = dirtyWords.some((w) => lower.includes(w));
   const hasTarget = targetMarkers.some((t) => lower.includes(t));
 
@@ -57,17 +173,33 @@ function runMockModeration(text: string): AIModerationResult {
       isViolation: false,
       category: isSelfDeprecation ? "self_deprecation" : "banter",
       confidence: 0.9,
-      reasoning: "Kata kasar dipakai dalam konteks humor/akrab/self-deprecation, tidak ada niat menyerang.",
+      reasoning:
+        "Kata kasar dipakai dalam konteks humor/akrab/self-deprecation, tidak ada niat menyerang.",
+    };
+  }
+
+  if (hasAppearanceInsult && hasTarget) {
+    return {
+      isViolation: true,
+      category: "personal_attack",
+      confidence: 0.9,
+      reasoning: "Hinaan fisik ditujukan langsung kepada orang lain.",
     };
   }
 
   // Situational surprise (netral) - jika ada kata kasar tapi ditujukan ke target, prioritas pelanggaran
-  if (isSituationalSurprise && !hasTarget && !hasDirtyWord && !(hasBadWord && hasTarget)) {
+  if (
+    isSituationalSurprise &&
+    !hasTarget &&
+    !hasDirtyWord &&
+    !(hasBadWord && hasTarget)
+  ) {
     return {
       isViolation: false,
       category: "neutral",
       confidence: 0.85,
-      reasoning: "Ekspresi kekagetan/kekesakan situasional tanpa target serangan.",
+      reasoning:
+        "Ekspresi kekagetan/kekesakan situasional tanpa target serangan.",
     };
   }
 
@@ -78,14 +210,16 @@ function runMockModeration(text: string): AIModerationResult {
         isViolation: true,
         category: "personal_attack",
         confidence: 0.9,
-        reasoning: "Kata kasar/jroh ditujukan ke target spesifik dengan niat merendahkan.",
+        reasoning:
+          "Kata kasar/jroh ditujukan ke target spesifik dengan niat merendahkan.",
       };
     }
     return {
       isViolation: true,
       category: "harassment",
       confidence: 0.75,
-      reasoning: "Mengandung kata kasar/jroh tanpa target jelas, potensi pelanggaran etika.",
+      reasoning:
+        "Mengandung kata kasar/jroh tanpa target jelas, potensi pelanggaran etika.",
     };
   }
 
@@ -110,6 +244,7 @@ PANDUAN PENILAIAN:
 1. PELANGGARAN NYATA (isViolation = true)
    Ciri-ciri:
    - Ditujukan ke orang/kelompok tertentu secara personal dan merendahkan martabat.
+  - Ejekan fisik seperti "woi jlek" atau "kamu jelek" (termasuk variasi ejaan informal "jlek") dihitung sebagai serangan personal bila diarahkan ke seseorang.
    - Ada niat menyakiti, mempermalukan, mengintimidasi, melecehkan (termasuk pelecehan seksual/SARA), atau cyberbullying.
    - Nada serius/marah, tanpa indikator humor, dan/atau diikuti ancaman, ejekan fisik, ejekan keluarga, atau perbandingan merendahkan.
    Contoh:
@@ -145,14 +280,21 @@ Keluarkan HANYA JSON terstruktur sesuai schema yang diberikan, tanpa teks tambah
 - confidence (0-1)
 - reasoning (penjelasan singkat niat di balik komentar)`;
 
-export async function moderateComment(text: string): Promise<AIModerationResult> {
+export async function moderateComment(
+  text: string,
+): Promise<AIModerationResult> {
   console.log("[AI] >>> moderateComment called:", text);
   const provider = process.env.AI_PROVIDER || "mock";
   const apiKey = process.env.AI_API_KEY || "";
   const baseURL = process.env.AI_BASE_URL;
   const modelName = process.env.AI_MODEL;
 
-  console.log("[AI] Provider:", provider, "| Key:", apiKey ? "present" : "missing");
+  console.log(
+    "[AI] Provider:",
+    provider,
+    "| Key:",
+    apiKey ? "present" : "missing",
+  );
 
   if (provider === "mock" || !apiKey) {
     console.log("[AI] Using MOCK moderation");
@@ -169,7 +311,7 @@ export async function moderateComment(text: string): Promise<AIModerationResult>
   } else if (provider === "google" || provider === "gemini") {
     console.log("[AI] Using Google Gemini provider");
     const google = createGoogleGenerativeAI({ apiKey, baseURL });
-    model = google(modelName || "gemini-1.5-flash");
+    model = google(modelName || "gemini-2.5-flash");
   } else {
     console.log("[AI] Using OpenAI provider");
     const openai = createOpenAI({ apiKey, baseURL });

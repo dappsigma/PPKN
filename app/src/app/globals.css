@@ -1265,6 +1265,127 @@ input:focus-visible {
   text-decoration: underline;
 }
 
+/* =========================================================
+   INSTAGRAM NATIVE DIALOGS & ALERT MODAL STYLES
+   ========================================================= */
+
+.ig-dialog-sheet {
+  text-align: center;
+}
+
+.ig-dialog-header {
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-bottom: 1px solid #363636;
+}
+
+.ig-dialog-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  color: #f5f5f5;
+  line-height: 1.35;
+}
+
+.ig-dialog-desc {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--mute);
+  line-height: 1.45;
+  max-width: 320px;
+}
+
+.ig-dialog-subtitle {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #ff727c;
+  font-weight: 600;
+}
+
+.ig-alert-sheet {
+  width: min(420px, 92vw);
+}
+
+.ig-alert-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.ig-alert-icon-wrap.warning-icon {
+  background: rgba(255, 190, 85, 0.12);
+  color: #ffbe55;
+  border: 1px solid rgba(255, 190, 85, 0.25);
+}
+
+.ig-alert-icon-wrap.security-icon {
+  background: rgba(237, 73, 86, 0.12);
+  color: #ff727c;
+  border: 1px solid rgba(237, 73, 86, 0.3);
+}
+
+.ig-dialog-body {
+  padding: 16px 20px;
+  border-bottom: 1px solid #363636;
+}
+
+.ig-alert-info-box {
+  background: #18191c;
+  border: 1px solid #36393f;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: left;
+}
+
+.ig-alert-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ig-alert-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 190, 85, 0.15);
+  color: #ffbe55;
+  border: 1px solid rgba(255, 190, 85, 0.3);
+}
+
+.ig-level-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(237, 73, 86, 0.15);
+  color: #ff727c;
+  border: 1px solid rgba(237, 73, 86, 0.3);
+}
+
+.ig-alert-reason {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e5e7eb;
+}
+
+.ig-alert-confirm-btn {
+  font-weight: 700;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

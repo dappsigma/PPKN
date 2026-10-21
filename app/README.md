@@ -3,6 +3,7 @@
 Aplikasi demonstrasi penegakan norma & etika digital dengan sanksi berjenjang dan peninjauan realtime oleh AI (tanpa database).
 
 ## Fitur Utama
+
 1. **Moderasi AI Realtime**: Memeriksa komentar kasar, jorok, dan tidak pantas menggunakan Vercel AI SDK.
 2. **Sanksi Berjenjang**:
    - **Level 1 (Peringatan)**: Komentar tetap tampil + popup notifikasi AI.
@@ -15,16 +16,21 @@ Aplikasi demonstrasi penegakan norma & etika digital dengan sanksi berjenjang da
 ## Cara Menjalankan
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Setup Environment**:
-   Salin file `.env.local.example` ke `.env.local`:
+   Salin file `.env.local.example` ke `.env.local`, lalu isi API key dari provider Anda:
+
    ```bash
    cp .env.local.example .env.local
    ```
-   *(Opsional: Jika tidak mengisi API key atau `AI_PROVIDER=mock`, sistem akan menggunakan fallback kata terlarang otomatis untuk simulasi demo).*
+
+   Konfigurasi moderasi AI berjalan di server melalui `AI_PROVIDER`, `AI_API_KEY`, dan `AI_MODEL`. Contoh ini memakai Gemini (`AI_PROVIDER=google`, `AI_MODEL=gemini-2.5-flash`). Ambil API key dari Google AI Studio dan isi hanya di `.env.local`. Provider `openai` (termasuk endpoint OpenAI-compatible) dan `anthropic` juga tersedia. Jangan letakkan API key di kode frontend atau commit file `.env.local`.
+
+   Tanpa API key yang valid, sistem memakai moderasi lokal berbasis kata kunci untuk demo.
 
 3. **Jalankan Project**:
    ```bash

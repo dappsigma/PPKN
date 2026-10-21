@@ -61,6 +61,7 @@ export function readAccounts(): AccountData {
   }
   try {
     const raw = fs.readFileSync(filePath, "utf-8");
+    if (!raw.trim()) return {};
     return JSON.parse(raw);
   } catch {
     return {};
@@ -79,7 +80,11 @@ export function readComments(): CommentData[] {
   }
   try {
     const raw = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(raw);
+    if (!raw.trim()) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Komentar yang terdeteksi bermasalah otomatis difilter keluar agar tidak tampil
+    return parsed.filter((c) => !c.flagged);
   } catch {
     return [];
   }

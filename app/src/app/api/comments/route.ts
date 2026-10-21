@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { moderateComment } from "@/lib/ai";
 import { evaluateSanction } from "@/lib/sanctions";
 import { readComments, writeComments, readSettings, writeSettings } from "@/lib/storage";
+import { detectSqlInjection, isValidSafeIdentifier, sanitizeText } from "@/lib/security";
 
 // Sanction durations are server policy: set FAST_TEST_MODE=true for short demo mutes
 const fastTestMode = process.env.FAST_TEST_MODE === "true";
@@ -42,9 +43,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing account ID" }, { status: 401 });
     }
 
-    const { text, postId = "post_1" } = await req.json();
-    if (!text || text.trim() === "") {
-      return NextResponse.json({ error: "Comment text is required" }, { status: 400 });
+    if (!isValidSafeIdentifier(accountId)) {
+      return NextResponse.json({ error: "Format ID akun tidak valid" }, { status: 400 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const rawText = body?.text;
+    const postId = body?.postId || "post_1";
+
+    if (!isValidSafeIdentifier(postId)) {
+      return NextResponse.json({ error: "Format Post ID tidak valid" }, { status: 400 });
+    }
+
+    if (!rawText || typeof rawText !== "string" || rawText.trim() === "") {
+      return NextResponse.json({ error: "Isi komentar wajib diisi" }, { status: 400 });
     }
 
     // 0. Cek apakah komentar ditutup oleh pemilik postingan
@@ -56,7 +68,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Cek status sanksi saat ini
+    // 1. Cek status sanksi akun saat ini
     const currentStatus = evaluateSanction(accountId, false, undefined, fastTestMode).status;
     if (!currentStatus.canComment) {
       return NextResponse.json(
@@ -65,7 +77,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. SIMPAN KOMENTAR SEGERA (review pending) — upload tidak menunggu AI
+    // 2. PERLINDUNGAN KEAMANAN SIBER: Deteksi SQL Injection pada teks komentar
+    const sqliCheck = detectSqlInjection(rawText);
+    if (sqliCheck.isSqlInjection) {
+      // Komentar SQL injection LANGSUNG DITOLAK & DIHAPUS (tidak disimpan ke data)
+      const { status, levelAssigned } = evaluateSanction(
+        accountId,
+        true,
+        {
+          text: rawText,
+          category: "sql_injection",
+          reason: `Percobaan SQL Injection terdeteksi: Komentar langsung dihapus dan diblokir untuk keamanan sistem. (${sqliCheck.threatName || "Pola Tidak Aman"})`,
+        },
+        fastTestMode
+      );
+
+      return NextResponse.json(
+        {
+          error: `Komentar terdeteksi mengandung indikasi serangan SQL Injection (${sqliCheck.threatName || "SQLi"}) dan langsung dihapus oleh sistem keamanan.`,
+          securityViolation: true,
+          threatName: sqliCheck.threatName,
+          status,
+          levelAssigned,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Sanitasi teks untuk mencegah XSS atau karakter kontrol berbahaya
+    const text = sanitizeText(rawText);
+    if (!text) {
+      return NextResponse.json({ error: "Isi komentar tidak valid setelah sanitasi." }, { status: 400 });
+    }
+
+    // 3. SIMPAN KOMENTAR SEMENTARA (status review: pending)
     const newCommentId = `c_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const comments = readComments();
     comments.unshift({
@@ -80,12 +125,12 @@ export async function POST(req: NextRequest) {
     if (comments.length > 100) comments.length = 100;
     writeComments(comments);
 
-    // 3. PENINJAUAN AI DI BELAKANG (setelah response terkirim)
+    // 4. PENINJAUAN AI DI BELAKANG (moderasi otomatis)
     after(async () => {
       const finish = (mutate: (list: ReturnType<typeof readComments>, idx: number) => void) => {
         const latest = readComments();
         const idx = latest.findIndex((c) => c.id === newCommentId);
-        if (idx === -1) return; // komentar sudah dihapus (reset dsb.)
+        if (idx === -1) return; // Komentar sudah dihapus
         mutate(latest, idx);
         writeComments(latest);
       };
@@ -94,42 +139,42 @@ export async function POST(req: NextRequest) {
         const aiResult = await moderateComment(text);
 
         if (aiResult.isViolation) {
-          // Sanksi dulu, baru update komentar (level > 1 = komentar disembunyikan)
-          const { levelAssigned } = evaluateSanction(accountId, true, {
-            text,
-            category: aiResult.category,
-            reason: aiResult.reasoning,
-          }, fastTestMode);
+          // Tetapkan sanksi pelanggaran ke akun
+          evaluateSanction(
+            accountId,
+            true,
+            {
+              text,
+              category: aiResult.category,
+              reason: aiResult.reasoning,
+            },
+            fastTestMode
+          );
 
+          // ATURAN UTAMA: Ketika komentar terdeteksi bermasalah,
+          // komentarnya HARUS LANGSUNG DIHAPUS dari daftar komentar (apapun level sanksinya)
           finish((list, idx) => {
-            if (levelAssigned > 1) {
-              list.splice(idx, 1);
-            } else {
-              const c = list[idx];
-              c.flagged = true;
-              c.category = aiResult.category;
-              c.reason = aiResult.reasoning;
-              c.review = "done";
-            }
+            list.splice(idx, 1);
           });
         } else {
+          // Komentar bersih: tandai review selesai
           finish((list, idx) => {
             list[idx].review = "done";
           });
         }
       } catch (err) {
-        // Review gagal: komentar tetap tampil tanpa flag, jangan stuck pending
-        console.error("Background AI review failed:", err);
+        // Jika tinjauan gagal, biarkan selesai agar tidak macet di status pending
+        console.error("Background AI review error:", err);
         finish((list, idx) => {
           list[idx].review = "done";
         });
       }
     });
 
-    // 4. RESPONSE LANGSUNG (client tampilkan komentar, hasil AI menyusul via polling)
+    // 5. RESPONSE KE CLIENT
     return NextResponse.json({
       success: true,
-      message: "Komentar berhasil dikirim",
+      message: "Komentar berhasil dikirim dan sedang diverifikasi sistem",
       commentId: newCommentId,
       pendingReview: true,
     });
@@ -165,6 +210,14 @@ export async function DELETE(req: NextRequest) {
     if (!commentId) {
       return NextResponse.json(
         { error: "ID komentar diperlukan untuk menghapus." },
+        { status: 400 }
+      );
+    }
+
+    // Validasi parameter ID untuk mencegah injection pada URL/body
+    if (!isValidSafeIdentifier(commentId)) {
+      return NextResponse.json(
+        { error: "Format ID komentar tidak valid atau mengandung karakter tidak aman." },
         { status: 400 }
       );
     }

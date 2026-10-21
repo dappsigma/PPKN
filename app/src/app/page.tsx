@@ -2,6 +2,8 @@
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
+  AlertCircle,
+  AlertTriangle,
   BadgeCheck,
   Bookmark,
   Check,
@@ -22,24 +24,22 @@ import {
   RotateCcw,
   Search,
   Send,
+  ShieldAlert,
   Smile,
   Trash2,
   UserRound,
   X,
 } from "lucide-react";
 import useSWR from "swr";
-import Swal from "sweetalert2";
-import "sweetalert2/dist/sweetalert2.min.css";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const post = {
   id: "post_1",
   creator: {
-    username: "Bernadya",
+    username: "Bernyanyi",
     name: "Edukasi PPKN Nasional",
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    avatar: "/media/japran.jpeg",
   },
   caption:
     "Mari wujudkan ruang digital Indonesia yang santun, beretika, dan bebas dari cyberbullying! Setiap kata mencerminkan kepribadian bangsa. 🇮🇩 #PPKN #LiterasiDigital #SadarHukum",
@@ -75,12 +75,40 @@ export default function HomePage() {
   const [showCommentsList, setShowCommentsList] = useState(true);
   const [showPostOptions, setShowPostOptions] = useState(false);
   const commentInputRef = useRef<HTMLInputElement>(null);
-  const [alertPopup, setAlertPopup] = useState<{
+  // Instagram Native Confirmation Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
     show: boolean;
+    title: string;
+    description?: string;
+    confirmText?: string;
+    isDanger?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }>({ show: false, title: "", onConfirm: () => {} });
+
+  // Instagram Native Alert / Warning Modal State
+  const [alertDialog, setAlertDialog] = useState<{
+    show: boolean;
+    title: string;
+    subtitle?: string;
     category?: string;
-    reasoning?: string;
-    levelAssigned?: number;
-  }>({ show: false });
+    level?: number;
+    message: string;
+    isSecurity?: boolean;
+  }>({ show: false, title: "", message: "" });
+
+  // Instagram Floating Toast State
+  const [toast, setToast] = useState<{
+    message: string;
+    type?: "success" | "error";
+  } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast((current) => (current?.message === message ? null : current));
+    }, 4200);
+  };
+
   const lastSeenHistoryCount = useRef(0);
 
   const { data: commentsData, mutate: mutateComments } = useSWR(
@@ -132,89 +160,66 @@ export default function HomePage() {
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDeleteComment = async (commentId: string) => {
-    const result = await Swal.fire({
+  const handleDeleteComment = (commentId: string) => {
+    setConfirmDialog({
+      show: true,
       title: "Hapus Komentar?",
-      text: "Komentar ini akan dihapus secara permanen.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ed4956",
-      cancelButtonColor: "#363636",
-      confirmButtonText: "Hapus",
-      cancelButtonText: "Batal",
-      background: "#212328",
-      color: "#f5f5f5",
+      description: "Komentar ini akan dihapus secara permanen dari postingan ini.",
+      confirmText: "Hapus",
+      isDanger: true,
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, show: false }));
+        setDeletingId(commentId);
+        try {
+          const res = await fetch(
+            `/api/comments?id=${encodeURIComponent(commentId)}`,
+            {
+              method: "DELETE",
+            },
+          );
+          if (res.ok) {
+            mutateComments();
+            showToast("Komentar berhasil dihapus", "success");
+          } else {
+            const data = await res.json().catch(() => ({}));
+            showToast(data.error || "Gagal menghapus komentar.", "error");
+          }
+        } catch (err) {
+          console.error("Gagal menghapus komentar:", err);
+          showToast("Gagal menghapus komentar.", "error");
+        } finally {
+          setDeletingId(null);
+        }
+      },
     });
-    if (!result.isConfirmed) return;
-
-    setDeletingId(commentId);
-    try {
-      const res = await fetch(`/api/comments?id=${encodeURIComponent(commentId)}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        mutateComments();
-        Swal.fire({
-          icon: "success",
-          title: "Terhapus",
-          text: "Komentar berhasil dihapus.",
-          timer: 1500,
-          showConfirmButton: false,
-          background: "#212328",
-          color: "#f5f5f5",
-        });
-      } else {
-        const data = await res.json().catch(() => ({}));
-        Swal.fire({
-          icon: "error",
-          title: "Gagal Menghapus",
-          text: data.error || "Gagal menghapus komentar.",
-          confirmButtonColor: "#ed4956",
-          background: "#212328",
-          color: "#f5f5f5",
-        });
-      }
-    } catch (err) {
-      console.error("Gagal menghapus komentar:", err);
-    } finally {
-      setDeletingId(null);
-    }
   };
 
-  const handleDeleteAllComments = async () => {
-    const result = await Swal.fire({
+  const handleDeleteAllComments = () => {
+    setShowPostOptions(false);
+    setConfirmDialog({
+      show: true,
       title: "Hapus Semua Komentar?",
-      text: "Semua komentar pada postingan ini akan dihapus secara permanen.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ed4956",
-      cancelButtonColor: "#363636",
-      confirmButtonText: "Ya, Hapus Semua",
-      cancelButtonText: "Batal",
-      background: "#212328",
-      color: "#f5f5f5",
+      description: "Semua komentar pada postingan ini akan dihapus secara permanen.",
+      confirmText: "Hapus Semua",
+      isDanger: true,
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, show: false }));
+        try {
+          const res = await fetch("/api/comments?all=true", {
+            method: "DELETE",
+          });
+          if (res.ok) {
+            mutateComments();
+            showToast("Semua komentar berhasil dihapus", "success");
+          } else {
+            showToast("Gagal menghapus semua komentar", "error");
+          }
+        } catch (err) {
+          console.error("Gagal menghapus semua komentar:", err);
+          showToast("Gagal menghapus semua komentar", "error");
+        }
+      },
     });
-    if (!result.isConfirmed) return;
-
-    try {
-      const res = await fetch("/api/comments?all=true", {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        mutateComments();
-        setShowPostOptions(false);
-        Swal.fire({
-          icon: "success",
-          title: "Semua Komentar Terhapus",
-          timer: 1800,
-          showConfirmButton: false,
-          background: "#212328",
-          color: "#f5f5f5",
-        });
-      }
-    } catch (err) {
-      console.error("Gagal menghapus semua komentar:", err);
-    }
   };
 
   // ==========================================
@@ -226,7 +231,6 @@ export default function HomePage() {
   const [showRepostSheet, setShowRepostSheet] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [quoteInput, setQuoteInput] = useState("");
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -242,13 +246,6 @@ export default function HomePage() {
     }
   }, []);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage((current) => (current === msg ? null : current));
-    }, 4500);
-  };
-
   const handleInstantRepost = () => {
     setIsReposted(true);
     setRepostCount((prev) => (isReposted ? prev : prev + 1));
@@ -258,7 +255,7 @@ export default function HomePage() {
       localStorage.setItem("ppkn_reposted", "true");
       localStorage.removeItem("ppkn_quote");
     } catch {}
-    showToast("Diposting ulang ke profil Anda");
+    showToast("Diposting ulang ke profil Anda", "success");
   };
 
   const handleQuoteRepostSubmit = (e: React.FormEvent) => {
@@ -276,7 +273,7 @@ export default function HomePage() {
     setShowQuoteModal(false);
     setShowRepostSheet(false);
     setQuoteInput("");
-    showToast("Diposting ulang dengan catatan Anda");
+    showToast("Diposting ulang dengan catatan Anda", "success");
   };
 
   const handleUndoRepost = () => {
@@ -288,7 +285,7 @@ export default function HomePage() {
       localStorage.removeItem("ppkn_reposted");
       localStorage.removeItem("ppkn_quote");
     } catch {}
-    showToast("Postingan ulang telah dihapus");
+    showToast("Postingan ulang telah dihapus", "success");
   };
 
   const showLatestViolation = useEffectEvent(
@@ -297,30 +294,30 @@ export default function HomePage() {
       reason?: string;
       levelAssigned?: number;
     }) => {
-      Swal.fire({
-        icon: "warning",
-        title: "Peringatan Etika Digital",
-        html: `
-          <div style="text-align: left; background: rgba(255, 190, 85, 0.08); border: 1px solid rgba(255, 190, 85, 0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
-            <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 600; color: #ffbe55;">
-              Kategori: ${latest.category || "Pelanggaran Etika"}
-            </p>
-            <p style="margin: 0; font-size: 13px; line-height: 1.45; color: #e5e7eb;">
-              ${latest.reason || "Komentar terdeteksi mengandung unsur yang tidak pantas."}
-            </p>
-          </div>
-          ${
-            latest.levelAssigned
-              ? `<div style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; background: rgba(237, 73, 86, 0.15); border: 1px solid rgba(237, 73, 86, 0.35); border-radius: 999px; color: #ff727c; font-size: 13px; font-weight: 700;">
-                  <span>⚠️ Tingkat Sanksi: Level ${latest.levelAssigned}</span>
-                 </div>`
-              : ""
-          }
-        `,
-        confirmButtonText: "Saya Mengerti",
-        confirmButtonColor: "#ed4956",
-        background: "#212328",
-        color: "#f5f5f5",
+      const isSecurity = latest.category === "sql_injection";
+      let categoryLabel = latest.category || "Pelanggaran Etika";
+      if (latest.category === "sql_injection") {
+        categoryLabel = "Serangan Siber (SQL Injection)";
+      } else if (latest.category === "personal_attack") {
+        categoryLabel = "Serangan Personal";
+      } else if (latest.category === "harassment") {
+        categoryLabel = "Pelecehan / Kata Tidak Pantas";
+      } else if (latest.category === "bullying") {
+        categoryLabel = "Cyberbullying";
+      }
+
+      setAlertDialog({
+        show: true,
+        title: isSecurity ? "Keamanan Siber Terancam" : "Komentar Dihapus Otomatis",
+        subtitle: isSecurity
+          ? "Percobaan Injeksi SQL Terdeteksi & Dihapus"
+          : "Terdeteksi Bermasalah oleh Pengawas AI",
+        category: categoryLabel,
+        level: latest.levelAssigned,
+        message:
+          latest.reason ||
+          "Komentar terdeteksi bermasalah dan telah langsung dihapus dari sistem.",
+        isSecurity,
       });
     },
   );
@@ -351,49 +348,59 @@ export default function HomePage() {
         mutateComments();
         mutateStatus();
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Komentar Belum Terkirim",
-          text: data.error || "Gagal mengirim komentar.",
-          confirmButtonText: "Tutup",
-          confirmButtonColor: "#ed4956",
-          background: "#212328",
-          color: "#f5f5f5",
-        });
+        mutateComments();
+        mutateStatus();
+        if (data.securityViolation) {
+          setAlertDialog({
+            show: true,
+            title: "Keamanan Siber Terancam",
+            subtitle: "Percobaan Injeksi SQL Diblokir & Dihapus",
+            category: "Serangan Siber (SQL Injection)",
+            level: data.levelAssigned,
+            message:
+              data.error ||
+              "Komentar terdeteksi mengandung ancaman SQL Injection dan langsung dibatalkan demi keamanan.",
+            isSecurity: true,
+          });
+        } else {
+          setAlertDialog({
+            show: true,
+            title: "Komentar Tidak Dapat Dikirim",
+            subtitle: "Pemberitahuan Sistem",
+            message: data.error || "Gagal mengirim komentar.",
+            level: data.status?.level || data.levelAssigned,
+            isSecurity: false,
+          });
+        }
       }
     } catch (error) {
       console.error(error);
+      showToast("Terjadi kesalahan jaringan", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleReset = async () => {
-    const result = await Swal.fire({
+  const handleReset = () => {
+    setShowPostOptions(false);
+    setConfirmDialog({
+      show: true,
       title: "Reset Status Akun?",
-      text: "Semua riwayat pelanggaran dan sanksi akun ini akan dihapus dan dikembalikan ke kondisi awal.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#0095f6",
-      cancelButtonColor: "#363636",
-      confirmButtonText: "Ya, Reset",
-      cancelButtonText: "Batal",
-      background: "#212328",
-      color: "#f5f5f5",
-    });
-    if (!result.isConfirmed) return;
-
-    await fetch("/api/reset", { method: "POST" });
-    mutateStatus();
-    mutateComments();
-    Swal.fire({
-      icon: "success",
-      title: "Status Direset",
-      text: "Status akun Anda telah kembali aman.",
-      timer: 1800,
-      showConfirmButton: false,
-      background: "#212328",
-      color: "#f5f5f5",
+      description: "Semua riwayat pelanggaran dan sanksi akun ini akan dihapus dan dikembalikan ke kondisi awal.",
+      confirmText: "Reset Status",
+      isDanger: false,
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, show: false }));
+        try {
+          await fetch("/api/reset", { method: "POST" });
+          mutateStatus();
+          mutateComments();
+          showToast("Status akun Anda telah kembali aman", "success");
+        } catch (err) {
+          console.error("Gagal reset akun:", err);
+          showToast("Gagal mereset status akun", "error");
+        }
+      },
     });
   };
 
@@ -542,14 +549,22 @@ export default function HomePage() {
             </div>
             <div className="post-tools">
               {!commentsOpen && (
-                <span className="status-badge status-closed">Komentar Ditutup</span>
+                <span className="status-badge status-closed">
+                  Komentar Ditutup
+                </span>
               )}
               {getStatusBadge()}
               <button
                 className={`icon-button toggle-comments-btn ${!commentsOpen ? "is-closed" : ""}`}
                 onClick={handleToggleCommentsOpen}
-                aria-label={commentsOpen ? "Tutup fitur komentar" : "Buka fitur komentar"}
-                title={commentsOpen ? "Tutup Komentar (Nonaktifkan)" : "Buka Komentar (Aktifkan)"}
+                aria-label={
+                  commentsOpen ? "Tutup fitur komentar" : "Buka fitur komentar"
+                }
+                title={
+                  commentsOpen
+                    ? "Tutup Komentar (Nonaktifkan)"
+                    : "Buka Komentar (Aktifkan)"
+                }
               >
                 {commentsOpen ? <MessageCircle /> : <MessageSquareOff />}
               </button>
@@ -597,7 +612,8 @@ export default function HomePage() {
                 <MessageCircleOff className="hidden-icon" />
                 <p className="hidden-title">Daftar komentar disembunyikan</p>
                 <p className="hidden-desc">
-                  Komentar disembunyikan untuk kenyamanan tampilan. Klik tombol di bawah untuk membukanya.
+                  Komentar disembunyikan untuk kenyamanan tampilan. Klik tombol
+                  di bawah untuk membukanya.
                 </p>
                 <button
                   type="button"
@@ -627,7 +643,9 @@ export default function HomePage() {
                 {!commentsOpen && (
                   <div className="comments-notice-closed">
                     <Lock />
-                    <span>Fitur komentar telah dinonaktifkan oleh pemilik postingan.</span>
+                    <span>
+                      Fitur komentar telah dinonaktifkan oleh pemilik postingan.
+                    </span>
                   </div>
                 )}
 
@@ -661,10 +679,14 @@ export default function HomePage() {
                           </p>
                           <div className="comment-meta">
                             <span>
-                              {item.review === "pending" ? "Meninjau" : "Baru saja"}
+                              {item.review === "pending"
+                                ? "Meninjau"
+                                : "Baru saja"}
                             </span>
                             {item.flagged && (
-                              <span className="flag-label">AI: {item.category}</span>
+                              <span className="flag-label">
+                                AI: {item.category}
+                              </span>
                             )}
                             <button type="button">Balas</button>
                             <button
@@ -674,7 +696,9 @@ export default function HomePage() {
                               disabled={deletingId === item.id}
                               title="Hapus komentar ini"
                             >
-                              {deletingId === item.id ? "Menghapus..." : "Hapus"}
+                              {deletingId === item.id
+                                ? "Menghapus..."
+                                : "Hapus"}
                             </button>
                           </div>
                         </div>
@@ -719,16 +743,30 @@ export default function HomePage() {
                 <button
                   className={`icon-button action-button ${showCommentsList ? "text-[#0095f6]" : ""}`}
                   onClick={handleToggleCommentsList}
-                  aria-label={showCommentsList ? "Tutup tampilan komentar" : "Buka tampilan komentar"}
-                  title={showCommentsList ? "Tutup tampilan komentar" : "Buka tampilan komentar"}
+                  aria-label={
+                    showCommentsList
+                      ? "Tutup tampilan komentar"
+                      : "Buka tampilan komentar"
+                  }
+                  title={
+                    showCommentsList
+                      ? "Tutup tampilan komentar"
+                      : "Buka tampilan komentar"
+                  }
                 >
                   {showCommentsList ? <MessageCircle /> : <MessageCircleOff />}
                 </button>
                 <button
                   className={`icon-button action-button ${isReposted ? "reposted" : ""}`}
                   onClick={() => setShowRepostSheet(true)}
-                  aria-label={isReposted ? "Opsi posting ulang" : "Posting ulang"}
-                  title={isReposted ? "Diposting ulang (Klik untuk opsi)" : "Posting ulang (Repost)"}
+                  aria-label={
+                    isReposted ? "Opsi posting ulang" : "Posting ulang"
+                  }
+                  title={
+                    isReposted
+                      ? "Diposting ulang (Klik untuk opsi)"
+                      : "Posting ulang (Repost)"
+                  }
                 >
                   <Repeat2 />
                 </button>
@@ -751,13 +789,16 @@ export default function HomePage() {
             </div>
             <div className="likes-line">
               <span className="likes-avatars">
-                <i>t</i>
+                <i>r</i>
                 <i>w</i>
               </span>
               <span>
-                Disukai <b>tannrap</b> dan{" "}
+                Disukai <b>riizzxx34</b> dan{" "}
                 <b>{isLiked ? "598.001" : "598 ribu"} lainnya</b>
-                <span className="repost-stat"> · <b>{repostCount.toLocaleString()}</b> Repost</span>
+                <span className="repost-stat">
+                  {" "}
+                  · <b>{repostCount.toLocaleString("id-ID")}</b> Repost
+                </span>
               </span>
             </div>
             <div className="post-date">2 AGUSTUS</div>
@@ -788,7 +829,9 @@ export default function HomePage() {
                     <button
                       key={emoji}
                       type="button"
-                      onClick={() => setCommentText((current) => current + emoji)}
+                      onClick={() =>
+                        setCommentText((current) => current + emoji)
+                      }
                     >
                       {emoji}
                     </button>
@@ -861,10 +904,7 @@ export default function HomePage() {
               )}
             </button>
 
-            <button
-              className="options-item"
-              onClick={handleToggleCommentsList}
-            >
+            <button className="options-item" onClick={handleToggleCommentsList}>
               {showCommentsList ? (
                 <>
                   <MessageCircleOff className="w-4 h-4 mr-2" />
@@ -909,30 +949,112 @@ export default function HomePage() {
         </div>
       )}
 
-      {alertPopup.show && (
-        <div className="alert-backdrop" role="presentation">
-          <section
-            className="alert-dialog"
+      {/* Instagram Native Confirmation Dialog */}
+      {confirmDialog.show && (
+        <div
+          className="options-backdrop"
+          role="presentation"
+          onClick={() =>
+            setConfirmDialog((prev) => ({ ...prev, show: false }))
+          }
+        >
+          <div
+            className="options-sheet ig-dialog-sheet"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="alert-title"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="alert-mark">!</div>
-            <h2 id="alert-title">
-              {alertPopup.category === "GAGAL"
-                ? "Komentar belum terkirim"
-                : "Peringatan Etika"}
-            </h2>
-            <p>{alertPopup.reasoning}</p>
-            {alertPopup.levelAssigned ? (
-              <span className="alert-level">
-                Level sanksi {alertPopup.levelAssigned}
-              </span>
-            ) : null}
-            <button onClick={() => setAlertPopup({ show: false })}>
-              Saya mengerti
+            <div className="ig-dialog-header">
+              <h3 className="ig-dialog-title">{confirmDialog.title}</h3>
+              {confirmDialog.description && (
+                <p className="ig-dialog-desc">
+                  {confirmDialog.description}
+                </p>
+              )}
+            </div>
+            <button
+              className={`options-item ${
+                confirmDialog.isDanger ? "danger-text" : "primary-text"
+              }`}
+              onClick={confirmDialog.onConfirm}
+            >
+              {confirmDialog.confirmText || "Konfirmasi"}
             </button>
-          </section>
+            <button
+              className="options-item cancel-item"
+              onClick={() =>
+                setConfirmDialog((prev) => ({ ...prev, show: false }))
+              }
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Instagram Native Alert / Warning Modal */}
+      {alertDialog.show && (
+        <div
+          className="options-backdrop"
+          role="presentation"
+          onClick={() =>
+            setAlertDialog((prev) => ({ ...prev, show: false }))
+          }
+        >
+          <div
+            className="options-sheet ig-dialog-sheet ig-alert-sheet"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ig-dialog-header">
+              <div
+                className={`ig-alert-icon-wrap ${
+                  alertDialog.isSecurity ? "security-icon" : "warning-icon"
+                }`}
+              >
+                {alertDialog.isSecurity ? (
+                  <ShieldAlert className="w-6 h-6" />
+                ) : (
+                  <AlertTriangle className="w-6 h-6" />
+                )}
+              </div>
+              <h3 className="ig-dialog-title">{alertDialog.title}</h3>
+              {alertDialog.subtitle && (
+                <p className="ig-dialog-subtitle">{alertDialog.subtitle}</p>
+              )}
+            </div>
+
+            <div className="ig-dialog-body">
+              <div className="ig-alert-info-box">
+                {(alertDialog.category || alertDialog.level) && (
+                  <div className="ig-alert-badge-row">
+                    {alertDialog.category && (
+                      <span className="ig-alert-badge">
+                        {alertDialog.category}
+                      </span>
+                    )}
+                    {typeof alertDialog.level === "number" &&
+                      alertDialog.level > 0 && (
+                        <span className="ig-level-badge">
+                          Sanksi Level {alertDialog.level}
+                        </span>
+                      )}
+                  </div>
+                )}
+                <p className="ig-alert-reason">{alertDialog.message}</p>
+              </div>
+            </div>
+
+            <button
+              className="options-item primary-text ig-alert-confirm-btn"
+              onClick={() =>
+                setAlertDialog((prev) => ({ ...prev, show: false }))
+              }
+            >
+              Saya Mengerti
+            </button>
+          </div>
         </div>
       )}
 
@@ -1006,7 +1128,8 @@ export default function HomePage() {
               <h3>Posting Ulang dengan Catatan</h3>
             </div>
             <p className="quote-modal-desc">
-              Bagikan pemikiran atau pesan edukasi Anda mengenai postingan PPKN ini ke profil Anda.
+              Bagikan pemikiran atau pesan edukasi Anda mengenai postingan PPKN
+              ini ke profil Anda.
             </p>
             <textarea
               value={quoteInput}
@@ -1038,11 +1161,15 @@ export default function HomePage() {
       )}
 
       {/* Instagram Floating Toast */}
-      {toastMessage && (
+      {toast && (
         <div className="ig-toast">
           <div className="ig-toast-content">
-            <Check className="w-4 h-4 text-[#00ba7c]" />
-            <span>{toastMessage}</span>
+            {toast.type === "error" ? (
+              <AlertCircle className="w-4 h-4 text-[#ff727c]" />
+            ) : (
+              <Check className="w-4 h-4 text-[#00ba7c]" />
+            )}
+            <span>{toast.message}</span>
           </div>
           {isReposted && (
             <button
@@ -1058,4 +1185,3 @@ export default function HomePage() {
     </main>
   );
 }
-
